@@ -23,10 +23,7 @@ jobs:
 
       - name: Configure SSH
         run: |
-          if [ ! -d "$HOME/.ssh" ]; then
-            mkdir -p $HOME/.ssh
-          fi
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > $HOME/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' > $HOME/.ssh
           chmod 600 $HOME/.ssh
           ssh-keyscan -H "$SSH_HOST" > $HOME/.ssh/known_hosts
 
