@@ -1,0 +1,51 @@
+name: Deploy to AWS VPS
+
+on:
+  push:
+    branches:
+      - main  # Déclenche la pipeline sur un push vers la branche principale
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Mettre à jour les paquets
+        run:
+          sudo apt update && sudo apt upgrade -y
+
+      - name: Installer OpenSSH client
+        run:
+          sudo apt install -y openssh-client
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ${{ secrets.WORK_DIR }}
+
+            echo "Pulling the latest changes..."
+            git pull origin main
+
+            echo "Stopping and removing the existing container..."
+            docker-compose down
+            docker system prune -af
+            docker image prune -af
+
+            echo "Rebuilding and restarting the container..."
+            docker-compose up --build -d
+
+            echo "Deployment successful!"
+          EOF
+
+      - name: Cleanup SSH
+        run: rm -rf ~/.sshv
