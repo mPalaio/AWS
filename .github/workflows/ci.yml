@@ -23,10 +23,12 @@ jobs:
 
       - name: Configure SSH
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/
-          chmod 600 ~/.ssh/
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          if [ ! -d "$HOME/.ssh" ]; then
+            mkdir -p $HOME/.ssh
+          fi
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > $HOME/.ssh
+          chmod 600 $HOME/.ssh
+          ssh-keyscan -H "$SSH_HOST" > $HOME/.ssh/known_hosts
 
       - name: Deploy to VPS
         run: |
